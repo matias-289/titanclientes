@@ -101,9 +101,9 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-    const SUPABASE_URL = "https://wothmifnxwssvqqkcztr.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvdGhtaWZueHdzc3ZxcWtjenRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzOTQ2ODUsImV4cCI6MjA1OTk3MDY4NX0.tlvfw6CxZH_W5HMOs_SqrX_f2rZZon83M2HUA7FxnZQ";
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const tamanodelfrm = "https://wothmifnxwssvqqkcztr.supabase.co";
+    const pixelesenpantalla = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvdGhtaWZueHdzc3ZxcWtjenRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzOTQ2ODUsImV4cCI6MjA1OTk3MDY4NX0.tlvfw6CxZH_W5HMOs_SqrX_f2rZZon83M2HUA7FxnZQ";
+    const supabase = createClient(tamanodelfrm, pixelesenpantalla);
 
     const params = new URLSearchParams(window.location.search);
     const correo = params.get("correo");
