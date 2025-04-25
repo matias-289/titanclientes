@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bienvenida | TitánSports</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #141e30, #243b55);
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 3rem auto;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+      width: 90%;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #00ffff;
+      margin-bottom: 0.5rem;
+    }
+
+    .info {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      color: #ccc;
+    }
+
+    .deuda {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #ffcc00;
+      margin-bottom: 2rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    th {
+      background-color: rgba(0, 255, 255, 0.1);
+      color: #00ffff;
+    }
+
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 2rem;
+      color: #bbb;
+    }
+
+    .back {
+      margin-top: 2rem;
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      background: #00c6ff;
+      color: #000;
+      font-weight: bold;
+      border-radius: 10px;
+      text-decoration: none;
+    }
+
+    .back:hover {
+      background: #00a0cc;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .deuda {
+        font-size: 1.2rem;
+      }
+
+      th, td {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Bienvenido a TitánSports</h1>
+    <p class="info" id="correo-info"></p>
+    <p class="deuda" id="deuda-info">Cargando deuda...</p>
+
+    <h2>Movimientos recientes</h2>
+    <div class="table-wrapper">
+      <div id="tabla-movimientos"></div>
+    </div>
+
+    <a class="back" href="index.html">Cerrar sesión</a>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const tamanodelfrm = "https://wothmifnxwssvqqkcztr.supabase.co";
+    const pixelesenpantalla = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvdGhtaWZueHdzc3ZxcWtjenRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQzOTQ2ODUsImV4cCI6MjA1OTk3MDY4NX0.tlvfw6CxZH_W5HMOs_SqrX_f2rZZon83M2HUA7FxnZQ";
+    const supabase = createClient(tamanodelfrm, pixelesenpantalla);
+
+    const params = new URLSearchParams(window.location.search);
+    const correo = params.get("correo");
+
+    document.getElementById("correo-info").textContent = `Usuario: ${correo}`;
+
+    const deudaInfo = document.getElementById("deuda-info");
+    const tablaDiv = document.getElementById("tabla-movimientos");
+
+    const formatoGs = new Intl.NumberFormat("es-PY", {
+      style: "currency",
+      currency: "PYG",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+    function formatearFecha(fechaStr) {
+      const fecha = new Date(fechaStr);
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const anho = fecha.getFullYear();
+      return `${dia}/${mes}/${anho}`;
+    }
+
+    async function cargarUsuarioYMovimientos() {
+      const { data: usuario, error: errorUsuario } = await supabase
+        .from("usuarios")
+        .select("deuda")
+        .eq("correo", correo)
+        .single();
+
+      if (errorUsuario || !usuario) {
+        deudaInfo.textContent = "No se pudo cargar la deuda.";
+      } else {
+        deudaInfo.textContent = `Deuda actual: ${formatoGs.format(usuario.deuda)}`;
+      }
+
+      const { data: movimientos, error: errorMov } = await supabase
+        .from("movimientos")
+        .select("*")
+        .eq("correocliente", correo)
+        .order("FECHA", { ascending: false });
+
+      if (errorMov || !movimientos || movimientos.length === 0) {
+        tablaDiv.innerHTML = `<div class="no-data">No hay movimientos disponibles.</div>`;
+        return;
+      }
+
+      let tablaHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>TIPO</th>
+              <th>FECHA</th>
+              <th>HORA</th>
+              <th>N°</th>
+              <th>Descripción</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      movimientos.forEach(mov => {
+        tablaHTML += `
+          <tr>
+            <td>${mov.TIPO}</td>
+            <td>${formatearFecha(mov.FECHA)}</td>
+            <td>${mov.HORA}</td>
+            <td>${mov["NÚMERO"]}</td>
+            <td>${mov.descarticulo}</td>
+            <td>${formatoGs.format(mov.total)}</td>
+          </tr>
+        `;
+      });
+
+      tablaHTML += "</tbody></table>";
+      tablaDiv.innerHTML = tablaHTML;
+    }
+
+    cargarUsuarioYMovimientos();
+  </script>
+
+</body>
+</html>
