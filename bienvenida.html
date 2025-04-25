@@ -21,6 +21,7 @@
       border-radius: 15px;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 25px rgba(0, 0, 0, 0.3);
+      width: 90%;
     }
 
     h1 {
@@ -42,10 +43,15 @@
       margin-bottom: 2rem;
     }
 
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 2rem;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 2rem;
+      min-width: 600px;
     }
 
     th, td {
@@ -83,6 +89,21 @@
     .back:hover {
       background: #00a0cc;
     }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .deuda {
+        font-size: 1.2rem;
+      }
+
+      th, td {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -93,7 +114,9 @@
     <p class="deuda" id="deuda-info">Cargando deuda...</p>
 
     <h2>Movimientos recientes</h2>
-    <div id="tabla-movimientos"></div>
+    <div class="table-wrapper">
+      <div id="tabla-movimientos"></div>
+    </div>
 
     <a class="back" href="index.html">Cerrar sesión</a>
   </div>
@@ -107,20 +130,12 @@
 
     const params = new URLSearchParams(window.location.search);
     const correo = params.get("correo");
-    function formatearFecha(fechaStr) {
-  const fecha = new Date(fechaStr);
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const anho = fecha.getFullYear();
-  return ${dia}/${mes}/${anho};
-}
 
-    document.getElementById("correo-info").textContent = Usuario: ${correo};
+    document.getElementById("correo-info").textContent = `Usuario: ${correo}`;
 
     const deudaInfo = document.getElementById("deuda-info");
     const tablaDiv = document.getElementById("tabla-movimientos");
 
-    // Formateador de números a Gs. #
     const formatoGs = new Intl.NumberFormat("es-PY", {
       style: "currency",
       currency: "PYG",
@@ -128,8 +143,15 @@
       maximumFractionDigits: 0,
     });
 
+    function formatearFecha(fechaStr) {
+      const fecha = new Date(fechaStr);
+      const dia = String(fecha.getDate()).padStart(2, '0');
+      const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+      const anho = fecha.getFullYear();
+      return `${dia}/${mes}/${anho}`;
+    }
+
     async function cargarUsuarioYMovimientos() {
-      // Obtener deuda
       const { data: usuario, error: errorUsuario } = await supabase
         .from("usuarios")
         .select("deuda")
@@ -139,10 +161,9 @@
       if (errorUsuario || !usuario) {
         deudaInfo.textContent = "No se pudo cargar la deuda.";
       } else {
-        deudaInfo.textContent = Deuda actual: ${formatoGs.format(usuario.deuda)};
+        deudaInfo.textContent = `Deuda actual: ${formatoGs.format(usuario.deuda)}`;
       }
 
-      // Obtener movimientos
       const { data: movimientos, error: errorMov } = await supabase
         .from("movimientos")
         .select("*")
@@ -150,12 +171,11 @@
         .order("FECHA", { ascending: false });
 
       if (errorMov || !movimientos || movimientos.length === 0) {
-        tablaDiv.innerHTML = <div class="no-data">No hay movimientos disponibles.</div>;
+        tablaDiv.innerHTML = `<div class="no-data">No hay movimientos disponibles.</div>`;
         return;
       }
 
-      // Crear tabla HTML
-      let tablaHTML = 
+      let tablaHTML = `
         <table>
           <thead>
             <tr>
@@ -168,10 +188,10 @@
             </tr>
           </thead>
           <tbody>
-      ;
+      `;
 
       movimientos.forEach(mov => {
-        tablaHTML += 
+        tablaHTML += `
           <tr>
             <td>${mov.TIPO}</td>
             <td>${formatearFecha(mov.FECHA)}</td>
@@ -180,7 +200,7 @@
             <td>${mov.descarticulo}</td>
             <td>${formatoGs.format(mov.total)}</td>
           </tr>
-        ;
+        `;
       });
 
       tablaHTML += "</tbody></table>";
